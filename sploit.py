@@ -13,7 +13,7 @@ def recv_n_bytes(sock, n):
         c += 1
     return data
 
-s = create_connection(("localhost", 7171))
+s = create_connection(("10.30.56.126", 7171))
 buffer_address = recv_n_bytes(s, 8)
 print repr(buffer_address)
 buffer_address = struct.unpack("<Q", buffer_address)[0]

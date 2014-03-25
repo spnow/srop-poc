@@ -16,6 +16,13 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
+void ret_15(void) {
+  asm(".intel_syntax noprefix\n");
+  asm("mov rax, 0xf\n");
+  asm("syscall\n");
+  asm("ret\n");
+}
+
 int tcp_listen(int port) {
   int sock;
   struct sockaddr_in addr = { .sin_family = AF_INET, .sin_port = htons(port), .sin_addr = INADDR_ANY };
@@ -39,12 +46,6 @@ int tcp_listen(int port) {
   }
 
   return sock;
-}
-
-uint64_t htonll(uint64_t value) {
-  uint32_t high_part = htonl((uint32_t)(value>>32));
-  uint32_t low_part  = htonl((uint32_t)(value & 0xFFFFFFFF));
-  return (((uint64_t)low_part) << 32) | high_part;
 }
 
 int read_input(int conn_fd) {
