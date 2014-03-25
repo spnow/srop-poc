@@ -23,7 +23,7 @@ class SigreturnFrame(object):
                 self.frame.append(i * 4)
             if self.sane:
                 self.set_regvalue("gs", 0x33)
-		if self.nulls_allowed:
+                if self.nulls_allowed:
                     self.set_regvalue("fs", 0x0)
                 self.set_regvalue("es", 0x7b)
                 self.set_regvalue("ds", 0x7b)
