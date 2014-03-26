@@ -19,7 +19,7 @@ class SigreturnFrame(object):
 
     def initialize_vals(self):
         if self.arch == "x86":
-            for i in caps + lower:
+            for i in caps[:17]:
                 self.frame.append(i * 4)
             if self.sane:
                 self.set_regvalue("gs", 0x33)
@@ -33,6 +33,8 @@ class SigreturnFrame(object):
     def set_regvalue(self, reg, val):
         index = reg_pos_mapping[reg]
         self.frame[index] = struct.pack("<I", val)
+        print "set %s to %s" %(registers[index], val)
 
     def get_frame(self):
+        print repr(self.frame)
         return ''.join(self.frame)	

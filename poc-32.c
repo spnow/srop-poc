@@ -50,12 +50,12 @@ int tcp_listen(int port) {
 
 int read_input(int conn_fd) {
   char buffer[512];
-  uint64_t buffer_address = (uint64_t)&buffer;
-  write(conn_fd, &buffer_address, 8);
+  uint32_t buffer_address = (uint32_t)&buffer;
+  write(conn_fd, &buffer_address, 4);
   printf("[+] Address of buffer = %p\n", buffer);
   char *page = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
   printf("[+] Address of mapped page = %p\n", page);
-  write(conn_fd, &page, 8);
+  write(conn_fd, &page, 4);
   read(conn_fd, buffer, 600);
   return 0;
 }
