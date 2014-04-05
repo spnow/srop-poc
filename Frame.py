@@ -4,37 +4,47 @@ import string
 caps = string.letters[26:]
 lower = string.letters[:26]
 
-registers = ["gs", "fs", "es", "ds", "edi", "esi", "ebp", "esp", "ebx", "edx", "ecx", "eax", "JUNK", "JUNK", "eip", "cs", "eflags"]
+registers = ["gs",   "fs",  "es",  "ds",   "edi",  "esi", "ebp", "esp", "ebx",
+             "edx",  "ecx", "eax", "JUNK", "JUNK", "eip", "cs",  "eflags",
+             "JUNK", "ss",  "floa"]
+
 reg_pos_mapping = {}
 for pos, reg in enumerate(registers):
     reg_pos_mapping[reg] = pos
 
+class ValueException(Exception):
+    def __init__(self, register, value):
+        self.value = value
+    def __str__(self):
+        return "Register: %s Value: %d" %(register, value)
+
 class SigreturnFrame(object):
-    def __init__(self, arch="x86", sane=True, nulls_allowed=False):
+    def __init__(self, syscall_gadget, arch="x86"):
         self.arch  = arch
         self.frame = []
-        self.sane  = sane
-        self.nulls_allowed = nulls_allowed
+        self.syscall_gadget = syscall_gadget
         self.initialize_vals()
 
     def initialize_vals(self):
         if self.arch == "x86":
-            for i in caps[:17]:
-                self.frame.append(i * 4)
-            if self.sane:
-                self.set_regvalue("gs", 0x33)
-                if self.nulls_allowed:
-                    self.set_regvalue("fs", 0x0)
-                self.set_regvalue("es", 0x7b)
-                self.set_regvalue("ds", 0x7b)
-                self.set_regvalue("cs", 0x73)
-                self.set_regvalue("eflags", 0x246)
+            self._initialize_x86()
+
+    def _initialize_x86(self):
+        for i in range(len(registers)):
+            self.frame.append(struct.pack("<I", 0x0))
 
     def set_regvalue(self, reg, val):
+        if self.arch == "x86":
+            self._set_regvalue_x86(reg, val)
+
+    def _set_regvalue_x86(self, reg, val):
         index = reg_pos_mapping[reg]
-        self.frame[index] = struct.pack("<I", val)
-        print "set %s to %s" %(registers[index], val)
+        value = struct.pack("<I", val)
+        if reg == "ss":
+            value = struct.pack("<h", val) + "\x00\x00"
+        self.frame[index] = value
 
     def get_frame(self):
-        print repr(self.frame)
-        return ''.join(self.frame)	
+        frame_contents = ''.join(self.frame)
+        assert len(frame_contents) == len(registers) * 4
+        return frame_contents

