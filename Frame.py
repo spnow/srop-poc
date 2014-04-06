@@ -19,10 +19,9 @@ class ValueException(Exception):
         return "Register: %s Value: %d" %(register, value)
 
 class SigreturnFrame(object):
-    def __init__(self, syscall_gadget, arch="x86"):
+    def __init__(self, arch="x86"):
         self.arch  = arch
         self.frame = []
-        self.syscall_gadget = syscall_gadget
         self.initialize_vals()
 
     def initialize_vals(self):
