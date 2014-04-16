@@ -56,6 +56,8 @@ class SigreturnFrame(object):
     def _initialize_x86(self):
         for i in range(len(registers_32)):
             self.frame.append(struct.pack("<I", 0x0))
+        self.set_regvalue("cs", 0x73)
+        self.set_regvalue("ss", 0x7b)
 
     def set_regvalue(self, reg, val):
         if self.arch == "x86":
