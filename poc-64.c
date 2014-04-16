@@ -49,7 +49,7 @@ int tcp_listen(int port) {
 }
 
 int read_input(int conn_fd) {
-  char buffer[512];
+  char buffer[20];
   uint64_t buffer_address = (uint64_t)&buffer;
   write(conn_fd, &buffer_address, 8);
   printf("[+] Address of buffer = %p\n", buffer);
