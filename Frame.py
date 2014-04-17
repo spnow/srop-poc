@@ -13,7 +13,10 @@ registers_64 = ["uc_flags", "&uc", "uc_stack.ss_sp", "uc_stack.ss_flags", "uc_st
                 "rbx", "rdx", "rax", "rcx", "rsp", "rip", "eflags", "csgsfs", "err", "trapno",
                 "oldmask", "cr2", "&fpstate", "__reserved", "sigmask"]
 
-print len(registers_64)
+registers_arm = ["uc_flags", "uc_link", "uc_stack.ss_sp", "uc_stack.ss_flags", "uc_stack.ss_size",
+		 "trap_no", "error_code", "oldmask", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+		 "r8", "r9", "r10", "fp", "ip", "sp", "lr", "pc", "cpsr", "fault_address", "uc_sigmask",
+		 "__unused", "uc_regspace"]
 
 reg_pos_mapping_x86 = {}
 for pos, reg in enumerate(registers_32):
@@ -22,6 +25,11 @@ for pos, reg in enumerate(registers_32):
 reg_pos_mapping_x64 = {}
 for pos, reg in enumerate(registers_64):
     reg_pos_mapping_x64[reg] = pos
+
+reg_pos_mapping_arm = {}
+for pos, reg in enumerate(registers_arm):
+    reg_pos_mapping_arm[reg] = pos
+
 
 class ValueException(Exception):
     def __init__(self, register, value):
@@ -40,6 +48,17 @@ class SigreturnFrame(object):
             self._initialize_x86()
         elif self.arch == "x64":
             self._initialize_x64()
+        elif self.arch == "arm":
+            self._initialize_arm()
+
+    def _initialize_arm(self):
+        for i in range(len(registers_arm)):
+            self.frame.append(struct.pack("<I", 0x0))
+
+    def _set_regvalue_arm(self, reg, val):
+        index = reg_pos_mapping_arm[reg]
+        value = struct.pack("<I", val)
+        self.frame[index] = value
 
     def _initialize_x64(self):
         for i in range(len(registers_64)):
@@ -64,6 +83,8 @@ class SigreturnFrame(object):
             self._set_regvalue_x86(reg, val)
         elif self.arch == "x64":
             self._set_regvalue_x64(reg, val)
+        elif self.arch == "arm":
+            self._set_regvalue_arm(reg, val)
 
     def _set_regvalue_x86(self, reg, val):
         index = reg_pos_mapping_x86[reg]
@@ -78,4 +99,6 @@ class SigreturnFrame(object):
             assert len(frame_contents) == len(registers_32) * 4
         elif self.arch == "x64":
             assert len(frame_contents) == len(registers_64) * 8
+        elif self.arch == "arm":
+            assert len(frame_contents) == len(registers_arm) * 4
         return frame_contents
